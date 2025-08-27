@@ -18,7 +18,9 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     env:
-      ANDROID_SDK_ROOT: ${{ /home/runner/work/_temp }}/Android/Sdk
+  ANDROID_SDK_ROOT: "${{ runner.temp }}/Android/Sdk"
+  ANDROID_HOME: "${{ runner.temp }}/Android/Sdk"
+  PATH: "${{ runner.temp }}/Android/Sdk/cmdline-tools/latest/bin:${{ runner.temp }}/Android/Sdk/platform-tools:${{ env.PATH }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,6 +41,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Show Java version (diagnostic)
+        run: |
+          java -version || true
+          javac -version || true
 
       - name: Install Android SDK command-line tools
         run: |
@@ -93,10 +100,11 @@ jobs:
           if [ -z "$APK_PATH" ]; then echo "APK not found"; exit 1; fi
           echo "Found apk: $APK_PATH"
           cp "$APK_PATH" ./app-debug.apk
-
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
           tag_name: ${{ github.event.inputs.release_name }}
           release_name: ${{ github.event.inputs.release_name }}
@@ -105,6 +113,8 @@ jobs:
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./app-debug.apk
