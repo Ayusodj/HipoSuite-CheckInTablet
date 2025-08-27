@@ -10,6 +10,9 @@ android {
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
 
+// Resolve plugin variables file from the root project so Gradle finds it
+// regardless of the current working directory in CI runners.
+apply from: rootProject.file('capacitor-cordova-android-plugins/cordova.variables.gradle')
 
 }
 
