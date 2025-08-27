@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+	/* defaults - will be overwritten by AppearanceContext */
+	--app-sidebar-bg: #053F3F;
+	--app-page-bg: #F3F4F6;
+	--app-selected-bg: #00B1A9;
+	--app-hover-bg: #0B6B6B;
+	--app-text-color: #1F2937;
+	--app-text-size: 16px;
+}
+
+/* Small utilities to map variables to tailwind-compatible classes when needed */
+.app-sidebar-bg { background-color: var(--app-sidebar-bg); }
+.app-page-bg { background-color: var(--app-page-bg); }
+.app-selected-bg { background-color: var(--app-selected-bg); }
+.app-hover-bg:hover { background-color: var(--app-hover-bg); }
+.app-text-color { color: var(--app-text-color); }
+/* Button text color mapped to appearance variable */
+.app-button-text-color { color: var(--app-button-text-color); }
+html { font-size: var(--app-text-size); }
+
+/* Fallbacks to ensure the selected/button text utilities map to the variables.
+	These rules are intentionally specific and use !important so they take effect
+	even if other rules override them; remove !important once you confirm visuals. */
+/* Prefer selected-button variable when present (no !important; keep specificity tidy) */
+.app-selected-bg { background-color: var(--app-selected-button-bg, var(--app-selected-bg)); }
+.app-button-text-color { color: var(--app-button-text-color); }
+
+/* Ensure a selected button inside an app page uses the selected background variable */
+.app-page-bg button.app-selected-bg { background-color: var(--app-selected-button-bg, var(--app-selected-bg)); color: var(--app-button-text-color); }
+
+/* Buttons inside the main page area should use the app button variables.
+   We deliberately scope to elements inside .app-page-bg to avoid coloring sidebar buttons. */
+.app-page-bg button:not(.no-theme-button):not(.app-selected-bg) {
+	background-color: var(--app-button-bg);
+	color: var(--app-button-text-color);
+	border-color: transparent;
+}
+
+/* Some buttons (export/print) should be excluded from the themed buttons; add class .no-theme-button to exclude */
+.no-theme-button {
+	/* Allow inline styles (e.g. style={{ background: '#fff' }}) on palette swatches and
+	   color inputs to take effect. Avoid using !important here so inline styles can win. */
+	background-color: initial;
+	color: initial;
+}
+
+/* Global styled select to match the quick-palette look */
+.styled-select-global,
+select.styled-select-global {
+	/* Allow the browser to render its native select control (arrow in its native box). */
+	/* Do NOT force appearance:none so the native arrow remains visible. */
+
+	color: #FFFFFF;
+	border-radius: 0.5rem;
+	/* Padding derecho razonable para que la flecha nativa no solape texto */
+	padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+	border: 1px solid rgba(0,0,0,0.6);
+	background: linear-gradient(#2F2F2F, #232323);
+	box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -6px 14px rgba(0,0,0,0.5);
+	transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+/* Ensure option text remains readable in supported browsers */
+select.styled-select-global option {
+	background: #2F2F2F;
+	color: #FFFFFF;
+}
+
+/* Decorative arrow using a pseudo-element on container. Use when select is wrapped in relative container */
+.styled-select-container { position: relative; display: inline-block; }
+/* Show the decorative arrow only when the container actually contains a select element.
+   Using :has(select) avoids showing the arrow on buttons accidentally wrapped with this class. */
+/* Removed custom boxed double-arrow pseudo-element to avoid overlapping native control.
+	If you later want a boxed custom arrow, we can add a `.styled-select-container::after` implementation
+	that only appears when needed. For now, rely on the browser native arrow. */
+
+/* Utility to remove default outline in favor of subtle ring */
+select.styled-select-global:focus {
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(0,177,169,0.12);
+}
+
+/* Fallback utility classes (used by some components) to keep UI usable
+	when Tailwind isn't installed/active. These are minimal and safe. */
+.bg-hipo-blue { background-color: var(--app-selected-bg); }
+.text-white { color: #ffffff; }
+/* Tailwind-like escaped class for disabled opacity used in JSX: "disabled:opacity-60" */
+.disabled\\:opacity-60 { opacity: 0.6; }
+
+/* Panel opaque backgrounds (85% opacity) for panels used on the check-in page */
+.panel-opaque {
+	background-color: rgba(255,255,255,0.8);
+	color: #111827; /* text-gray-900 */
+}
+
+@media (prefers-color-scheme: dark) {
+	.panel-opaque {
+		background-color: rgba(30,41,59,0.8); /* slate-800 with 80% opacity */
+		color: #F8FAFC; /* text-gray-100 */
+	}
+}
+
+/* Language flag button default style used on CheckInPage */
+.lang-flag-btn {
+	width: 40px;
+	height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	background-color: rgba(16,185,129,0.95); /* teal-ish */
+	color: #fff;
+	font-size: 18px;
+	line-height: 1;
+	padding: 0;
+}
+
+/* reduce default panel padding in small screens to compact the layout */
+.panel-opaque.p-3 { padding: 0.6rem; }
+.panel-opaque.p-4 { padding: 0.8rem; }
+
+/* Force the language container to allow up to 3 compact rows when needed */
+.lang-container { max-height: 126px; overflow: hidden; }
+
+/* Solid panel used for modals or elements that must not be translucent */
+.panel-solid {
+	background-color: #ffffff;
+	color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+	.panel-solid {
+		background-color: #0f1724; /* slate-900 / solid */
+		color: #F8FAFC;
+	}
+}

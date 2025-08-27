@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">hipo-suite</string>
+    <string name="title_activity_main">hipo-suite</string>
+    <string name="package_name">com.hipo.suite</string>
+    <string name="custom_url_scheme">com.hipo.suite</string>
+</resources>

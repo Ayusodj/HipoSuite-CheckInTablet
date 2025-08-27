@@ -1,0 +1,35 @@
+{
+  "name": "hiporecsuite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "backend": "cd ../backend_HipoSuite && if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi; python manage.py runserver 127.0.0.1:8000"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "date-fns": "^2.30.0",
+    "jspdf": "2.5.1",
+    "jspdf-autotable": "3.8.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-draggable": "^4.4.6",
+    "react-router-dom": "^6.25.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "sharp": "^0.34.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
