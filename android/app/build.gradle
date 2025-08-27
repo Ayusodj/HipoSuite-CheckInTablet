@@ -25,7 +25,12 @@ android {
 }
 
 repositories {
-    flatDir{
+    // Use standard remote repositories first so dependencies resolve in CI
+    google()
+    mavenCentral()
+
+    // keep flatDir for local .aar/.jar fallback when needed by plugins
+    flatDir {
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
