@@ -8,6 +8,9 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1uWZkDgOJM4y1BdQ-gQYHtJoV85ptq6kQ
 
+---
+CI trigger note: automated commit to re-run GitHub Actions workflow on 2025-08-27 by assistant.
+
 ## Run Locally
 
 **Prerequisites:**  Node.js

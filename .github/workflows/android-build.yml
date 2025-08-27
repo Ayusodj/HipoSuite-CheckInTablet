@@ -3,7 +3,16 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release and attach APK (true/false)'
+        required: false
+        default: 'false'
+      release_name:
+        description: 'Release / tag name to create (used when create_release=true)'
+        required: false
+        default: 'test-build'
 
 jobs:
   build-android:
@@ -63,3 +72,41 @@ jobs:
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  publish-release:
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true' }}
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+          path: ./artifacts
+
+      - name: Locate and copy apk
+        run: |
+          set -e
+          echo "Files in artifacts:"
+          find ./artifacts -type f -maxdepth 5 -print
+          APK_PATH=$(find ./artifacts -type f -name '*.apk' | head -n1)
+          if [ -z "$APK_PATH" ]; then echo "APK not found"; exit 1; fi
+          echo "Found apk: $APK_PATH"
+          cp "$APK_PATH" ./app-debug.apk
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.release_name }}
+          release_name: ${{ github.event.inputs.release_name }}
+          draft: false
+          prerelease: true
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./app-debug.apk
+          asset_name: app-debug.apk
+          asset_content_type: application/vnd.android.package-archive
