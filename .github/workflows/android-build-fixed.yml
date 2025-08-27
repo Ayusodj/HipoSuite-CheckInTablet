@@ -85,6 +85,13 @@ jobs:
       - name: Copy web assets to native project
         run: npx cap copy
 
+      - name: Ensure Capacitor Android plugins & sync
+        run: |
+          # Ensure native Android project is synced and plugin files are generated
+          npx cap sync android || true
+          echo '--- LS android/capacitor-cordova-android-plugins after sync ---'
+          ls -la android/capacitor-cordova-android-plugins || true
+
       - name: Build APK (Gradle)
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
