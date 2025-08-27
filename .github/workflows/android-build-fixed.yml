@@ -20,6 +20,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: CI workspace diagnostics
+        run: |
+          echo '--- PWD ---'
+          pwd
+          echo '--- LS root ---'
+          ls -la
+          echo '--- LS android ---'
+          ls -la android || true
+          echo '--- LS android/capacitor-cordova-android-plugins ---'
+          ls -la android/capacitor-cordova-android-plugins || true
+          echo '--- show android/settings.gradle ---'
+          sed -n '1,200p' android/settings.gradle || true
+          echo '--- show android/app/capacitor.build.gradle (head) ---'
+          sed -n '1,120p' android/app/capacitor.build.gradle || true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
