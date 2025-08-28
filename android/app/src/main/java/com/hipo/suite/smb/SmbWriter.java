@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import com.hierynomus.msdtyp.AccessMask;
-import com.hierynomus.smbj.share.SMB2ShareAccess;
-import com.hierynomus.smbj.share.SMB2CreateDisposition;
+import com.hierynomus.mssmb2.SMB2ShareAccess;
+import com.hierynomus.mssmb2.SMB2CreateDisposition;
 
 // jcifs-ng imports
 import com.hierynomus.smbj.SMBClient;
