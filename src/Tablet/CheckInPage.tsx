@@ -97,9 +97,10 @@ const TRANSLATIONS: Record<Lang, any> = {
 const CheckInPage: React.FC = () => {
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const [modalPos, setModalPos] = React.useState<{top: number; left: number} | null>(null);
-  const [lang, setLang] = useState<Lang>(() => {
-    try { const saved = localStorage.getItem('checkin_lang'); return (saved as Lang) || 'es'; } catch { return 'es'; }
-  });
+  const [lang, setLang] = useState<Lang>(() => { try { const saved = localStorage.getItem('checkin_lang'); return (saved as Lang) || 'es'; } catch { return 'es'; } });
+  const [showSettings, setShowSettings] = useState(false);
+  const hideLangs = (() => { try { return localStorage.getItem('checkin_hide_langs') === '1'; } catch { return false; } })();
+  const bgImage = (() => { try { return localStorage.getItem('checkin_bg') || '/assets/checkin-top-new.jpg'; } catch { return '/assets/checkin-top-new.jpg'; } })();
   const [showPolicy, setShowPolicy] = useState(false);
 
   const t = TRANSLATIONS[lang];
@@ -287,7 +288,7 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
   };
 
   return (
-  <div ref={rootRef} className="min-h-screen w-full flex flex-col items-center justify-between px-4 bg-fixed" style={{ backgroundImage: "url('/assets/checkin-top-new.jpg')", backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed', paddingTop: '6vh' }}>
+  <div ref={rootRef} className="min-h-screen w-full flex flex-col items-center justify-between px-4 bg-fixed" style={{ backgroundImage: `url('${bgImage}')`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed', paddingTop: '6vh' }}>
   {/* spacer arriba aumentado a 12vh para bajar el cuadro de idiomas */}
   <div aria-hidden style={{ height: '12vh', width: '100%' }} />
 
@@ -304,20 +305,27 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
       {/* Group languages, form and policy with consistent gap so spacing between elements is equal */}
       <div className="w-full max-w-3xl flex flex-col items-center gap-3">
         {/* Languages row */}
-        <div className="w-full panel-opaque rounded-lg shadow p-3">
-          <div className="flex justify-center">
-            <div className="flex flex-wrap justify-center gap-2" style={{ maxWidth: '100%', rowGap: '6px' }}>
-              {Object.keys(LANGUAGE_FLAGS).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setLang(k as Lang)}
-                  aria-label={k}
-                  className={`w-10 h-10 flex items-center justify-center text-lg text-white bg-teal-500 rounded-md ${lang===k ? 'ring-2 ring-offset-2' : ''}`}>
-                  {LANGUAGE_FLAGS[k as Lang]}
-                </button>
-              ))}
+        {!hideLangs && (
+          <div className="w-full panel-opaque rounded-lg shadow p-3">
+            <div className="flex justify-center">
+              <div className="flex flex-wrap justify-center gap-2" style={{ maxWidth: '100%', rowGap: '6px' }}>
+                {Object.keys(LANGUAGE_FLAGS).map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => setLang(k as Lang)}
+                    aria-label={k}
+                    className={`w-10 h-10 flex items-center justify-center text-lg text-white bg-teal-500 rounded-md ${lang===k ? 'ring-2 ring-offset-2' : ''}`}>
+                    {LANGUAGE_FLAGS[k as Lang]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+        )}
+
+        {/* settings button top-right */}
+        <div className="fixed top-4 right-4 z-50">
+          <button onClick={() => setShowSettings(true)} className="p-2 bg-white rounded shadow">⚙️</button>
         </div>
 
         {/* Form area */}
@@ -325,6 +333,11 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
           <div className="mb-3 text-center text-sm text-gray-600 dark:text-gray-300">{t.title}</div>
           <CheckInForm labels={t.labels} />
         </main>
+
+        {showSettings && (
+          // lazy load settings component to avoid circular imports
+          (() => { const Settings = require('./SettingsPage').default as React.FC<any>; return <Settings onClose={() => setShowSettings(false)} />; })()
+        )}
 
         {/* Privacy policy at bottom - placed with same gap as above */}
         <footer className="w-full flex justify-center" style={{ marginBottom: '3vh' }}>

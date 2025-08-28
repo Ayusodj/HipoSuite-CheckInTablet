@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGuestData } from '../contexts/GuestDataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { enqueueCheckin, processQueue, appendAccessLog } from '../utils/offlineQueue';
+import { sendToSmb } from '../services/smb';
 
 interface Labels {
   nombre: string;
@@ -9,6 +11,7 @@ interface Labels {
   cp: string;
   localidad: string;
   calleNumero: string;
+  motivo: string;
   enviar: string;
   reset: string;
 }
@@ -20,6 +23,7 @@ interface FormState {
   cp: string;
   localidad: string;
   calleNumero: string;
+  motivo?: string;
 }
 
 const initialState: FormState = {
@@ -38,6 +42,7 @@ const defaultLabels: Labels = {
   cp: 'C.P',
   localidad: 'Localidad',
   calleNumero: 'Calle nº',
+  motivo: 'Motivo',
   enviar: 'Enviar',
   reset: 'Reset'
 };
@@ -67,13 +72,14 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       cp: form.cp,
       localidad: form.localidad,
       calleNumero: form.calleNumero,
+      motivo: form.motivo || '',
       created_at: new Date().toISOString()
     };
     // If an excel server is configured (on the network), send there only.
     const excelServerUrl = (() => { try { return localStorage.getItem('excel_server_url'); } catch { return null; } })();
     const excelServerPath = (() => { try { return localStorage.getItem('excel_server_path'); } catch { return null; } })();
     const excelServerKey = (() => { try { return localStorage.getItem('excel_server_key'); } catch { return null; } })();
-    let saved = false;
+  let saved = false;
     if (excelServerUrl) {
       try {
         const url = excelServerUrl.replace(/\/$/, '') + '/append';
@@ -98,6 +104,27 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
     } else {
       const msg = navigator.language.startsWith('es') ? 'No hay servidor Excel configurado. Configura la URL en la pantalla de tablet.' : 'No excel server configured. Set the URL in tablet settings.';
       try { alert(msg); } catch (e) { console.warn('notify failed', e); }
+    }
+
+    // If not saved, enqueue for later delivery
+  if (!saved) {
+      try {
+        const rec = payload;
+        const enqOk = enqueueCheckin(rec as any);
+        if (enqOk) {
+      try { appendAccessLog({ ts: new Date().toISOString(), nombre: rec.nombre, motivo: rec.motivo }); } catch(e){}
+          try { alert(navigator.language.startsWith('es') ? 'Guardado en cola local. Se reintentará cuando haya red.' : 'Saved to local queue. Will retry when online.'); } catch(e){}
+          // Keep local shadow copy
+          addGuest({ roomNumber: form.calleNumero || 'N/A', guestName: form.nombre || 'N/A', mealPlanRegime: 'BB' as any });
+          setForm(initialState);
+          setTimeout(() => firstInputRef.current?.focus(), 50);
+        }
+      } catch (err) {
+        console.error('enqueue failed', err);
+      }
+    }
+    else {
+      try { appendAccessLog({ ts: new Date().toISOString(), nombre: payload.nombre, motivo: payload.motivo }); } catch(e){}
     }
 
     try {
@@ -125,6 +152,24 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    // Attempt to flush queue on mount and when coming online
+    let mounted = true;
+    async function tryFlush() {
+      try {
+        const sent = await processQueue(sendToSmb as any);
+        if (sent > 0) console.debug('flushed', sent);
+      } catch (err) {
+        console.debug('flush failed', err);
+      }
+    }
+    tryFlush();
+    const onOnline = () => { if (mounted) tryFlush(); };
+    window.addEventListener('online', onOnline);
+  const interval = setInterval(() => { if (mounted) tryFlush(); }, 30_000);
+  return () => { mounted = false; window.removeEventListener('online', onOnline); clearInterval(interval); };
+  }, []);
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -154,6 +199,11 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
           <label htmlFor="localidad" className="block text-sm md:text-base font-medium mb-1">{L.localidad}:</label>
           <input id="localidad" name="localidad" value={form.localidad} onChange={onChange} aria-label={L.localidad} placeholder="Barcelona" className="w-full border rounded px-4 py-3 text-base md:text-lg" />
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="motivo" className="block text-sm md:text-base font-medium mb-1">{L.motivo}:</label>
+        <input id="motivo" name="motivo" value={form.motivo || ''} onChange={onChange} aria-label={L.motivo} placeholder="Motivo de la visita" className="w-full border rounded px-4 py-3 text-base md:text-lg" />
       </div>
 
       <div>

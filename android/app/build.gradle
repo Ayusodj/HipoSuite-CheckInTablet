@@ -53,6 +53,8 @@ dependencies {
         // needs plugin artifacts, add a CI step to generate or copy them.
         println "Note: skipping dependency on ':capacitor-cordova-android-plugins' because it is not present"
     }
+    // SMB library for native SMB writes
+    implementation 'com.hierynomus:smbj:0.11.0'
 }
 
 apply from: 'capacitor.build.gradle'
