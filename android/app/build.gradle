@@ -28,6 +28,9 @@ repositories {
     // Use standard remote repositories first so dependencies resolve in CI
     google()
     mavenCentral()
+    jcenter()
+    // Explicit Maven Central URL in case of resolver issues
+    maven { url 'https://repo.maven.apache.org/maven2' }
 
     // keep flatDir for local .aar/.jar fallback when needed by plugins
     flatDir {
