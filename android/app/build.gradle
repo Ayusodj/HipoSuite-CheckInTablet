@@ -60,10 +60,15 @@ dependencies {
     }
     // SMB library for native SMB writes
     // Prefer a local JAR placed in android/app/libs (CI will download it if needed).
-    // If present, the local file will be used. Keep remote declaration as a fallback.
-    implementation files('libs/smbj-0.14.0.jar')
-    // Remote fallback (prefer published Maven Central version)
-    implementation 'com.hierynomus:smbj:0.14.0'
+    // Include the local JAR only when present to avoid duplicate-class conflicts with the remote artifact.
+    def smbjLocal = file('libs/smbj-0.14.0.jar')
+    if (smbjLocal.exists()) {
+        implementation files('libs/smbj-0.14.0.jar')
+        println "Using local smbj jar: ${smbjLocal.absolutePath}"
+    } else {
+        // Remote fallback (Maven Central)
+        implementation 'com.hierynomus:smbj:0.14.0'
+    }
 }
 
 apply from: 'capacitor.build.gradle'
