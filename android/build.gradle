@@ -27,7 +27,6 @@ allprojects {
     maven { url 'https://repo.maven.apache.org/maven2' }
     // Repositories required for some third-party libs (smbj)
     maven { url 'https://jitpack.io' }
-    maven { url 'https://repo.hierynomus.com/' }
     }
 }
 

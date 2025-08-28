@@ -31,9 +31,8 @@ repositories {
     jcenter()
     // Explicit Maven Central URL in case of resolver issues
     maven { url 'https://repo.maven.apache.org/maven2' }
-    // Additional repos for SMBJ
+    // Additional repo for SMBJ
     maven { url 'https://jitpack.io' }
-    maven { url 'https://repo.hierynomus.com/' }
 
     // keep flatDir for local .aar/.jar fallback when needed by plugins
     flatDir {
