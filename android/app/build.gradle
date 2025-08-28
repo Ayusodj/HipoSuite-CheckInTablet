@@ -59,7 +59,11 @@ dependencies {
         println "Note: skipping dependency on ':capacitor-cordova-android-plugins' because it is not present"
     }
     // SMB library for native SMB writes
-    implementation 'com.hierynomus:smbj:0.11.0'
+    // Prefer a local JAR placed in android/app/libs (CI will download it if needed).
+    // If present, the local file will be used. Keep remote declaration as a fallback.
+    implementation files('libs/smbj-0.14.0.jar')
+    // Remote fallback (prefer published Maven Central version)
+    implementation 'com.hierynomus:smbj:0.14.0'
 }
 
 apply from: 'capacitor.build.gradle'
