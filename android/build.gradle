@@ -17,6 +17,24 @@ buildscript {
     }
 }
 
+// Prefer Gradle Toolchain to request Java 21 for compatibility. Gradle will attempt
+// to use a suitable JDK if available or the environment's java binaries.
+subprojects {
+    afterEvaluate { project ->
+        try {
+            // Only set --release for pure Java projects (not Android application/library modules)
+            if (project.plugins.hasPlugin('java') &&
+                !project.plugins.hasPlugin('com.android.application') &&
+                !project.plugins.hasPlugin('com.android.library')) {
+                project.tasks.withType(JavaCompile).configureEach {
+                    // Use Java 17 for pure Java modules to remain compatible with toolchains
+                    it.options.release = 17
+                }
+            }
+        } catch (ignored) {}
+    }
+}
+
 apply from: "variables.gradle"
 
 allprojects {

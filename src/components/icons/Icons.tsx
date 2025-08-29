@@ -226,28 +226,8 @@ export const CalendarRealIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props)
 
 // End of appended realistic icons
 
-// Computer / laptop icon (converted from provided PNG)
-export const ComputerRealIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} {...props}>
-    {/* clipboard body */}
-    <rect x="5" y="3.5" width="14" height="17" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-    {/* clip */}
-    <rect x="9" y="1.8" width="6" height="2" rx="0.8" fill="currentColor" />
-    {/* checklist lines */}
-    <path d="M9.5 8.2h6.5" strokeLinecap="round" />
-    <path d="M9.5 11.2h6.5" strokeLinecap="round" />
-    <path d="M9.5 14.2h6.5" strokeLinecap="round" />
-    {/* checkmarks */}
-    <path d="M7.2 8.2l0.9 0.9 1.6-1.6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M7.2 11.2l0.9 0.9 1.6-1.6" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M7.2 14.2l0.9 0.9 1.6-1.6" strokeLinecap="round" strokeLinejoin="round" />
-    {/* small clock on bottom-right */}
-    <g>
-      <circle cx="17.5" cy="16.5" r="2" />
-      <path d="M17.5 15.2v1.1l0.9 0.5" strokeLinecap="round" strokeLinejoin="round" />
-    </g>
-  </svg>
-);
+// REMOVED: moved to /deprecated/removed-by-agent/Icons.tsx
+export {};
 
 // Bed / cama icon (converted from provided PNG)
 export const BedRealIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

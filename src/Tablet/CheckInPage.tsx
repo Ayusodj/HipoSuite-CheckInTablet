@@ -94,12 +94,14 @@ const TRANSLATIONS: Record<Lang, any> = {
   }
 };
 
+const Settings = React.lazy(() => import('./SettingsPage'));
+
 const CheckInPage: React.FC = () => {
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const [modalPos, setModalPos] = React.useState<{top: number; left: number} | null>(null);
   const [lang, setLang] = useState<Lang>(() => { try { const saved = localStorage.getItem('checkin_lang'); return (saved as Lang) || 'es'; } catch { return 'es'; } });
   const [showSettings, setShowSettings] = useState(false);
-  const hideLangs = (() => { try { return localStorage.getItem('checkin_hide_langs') === '1'; } catch { return false; } })();
+  const hiddenLangs: string[] = (() => { try { return JSON.parse(localStorage.getItem('checkin_hidden_langs') || '[]'); } catch { return []; } })();
   const bgImage = (() => { try { return localStorage.getItem('checkin_bg') || '/assets/checkin-top-new.jpg'; } catch { return '/assets/checkin-top-new.jpg'; } })();
   const [showPolicy, setShowPolicy] = useState(false);
 
@@ -305,11 +307,10 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
       {/* Group languages, form and policy with consistent gap so spacing between elements is equal */}
       <div className="w-full max-w-3xl flex flex-col items-center gap-3">
         {/* Languages row */}
-        {!hideLangs && (
           <div className="w-full panel-opaque rounded-lg shadow p-3">
             <div className="flex justify-center">
               <div className="flex flex-wrap justify-center gap-2" style={{ maxWidth: '100%', rowGap: '6px' }}>
-                {Object.keys(LANGUAGE_FLAGS).map((k) => (
+                {Object.keys(LANGUAGE_FLAGS).filter(k => !hiddenLangs.includes(k)).map((k) => (
                   <button
                     key={k}
                     onClick={() => setLang(k as Lang)}
@@ -321,7 +322,6 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
               </div>
             </div>
           </div>
-        )}
 
         {/* settings button top-right */}
         <div className="fixed top-4 right-4 z-50">
@@ -335,8 +335,9 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
         </main>
 
         {showSettings && (
-          // lazy load settings component to avoid circular imports
-          (() => { const Settings = require('./SettingsPage').default as React.FC<any>; return <Settings onClose={() => setShowSettings(false)} />; })()
+          <React.Suspense fallback={<div />}>
+            <Settings onClose={() => setShowSettings(false)} />
+          </React.Suspense>
         )}
 
         {/* Privacy policy at bottom - placed with same gap as above */}

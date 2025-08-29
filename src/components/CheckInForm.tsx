@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGuestData } from '../contexts/GuestDataContext';
-import { useAuth } from '../contexts/AuthContext';
+// GuestDataContext and AuthContext removed — use local no-op handlers instead
 import { enqueueCheckin, processQueue, appendAccessLog } from '../utils/offlineQueue';
 import { sendToSmb } from '../services/smb';
 
@@ -50,7 +49,7 @@ const defaultLabels: Labels = {
 const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
   const [form, setForm] = useState<FormState>(initialState);
   const [submitting, setSubmitting] = useState(false);
-  const { addGuest } = useGuestData();
+  const addGuest = (g: any) => { /* no-op: guest shadowing disabled in minimal tablet mode */ };
   const firstInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const L: Labels = { ...defaultLabels, ...(labels || {}) };
@@ -60,7 +59,7 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const auth = useAuth();
+  // auth removed
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

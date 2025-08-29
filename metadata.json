@@ -1,6 +1,6 @@
 {
-  "name": "HipoRecSuite",
-  "description": "Una completa suite de herramientas para los las recepciones de los hoteles de la cadena Hipotels, que incluye el diseño de tarjetas de bienvenida para los huéspedes (HipoCardGenius), Info Avalon (manual), gestión de visas y mucho más.",
+  "name": "HipoCheckinTablet",
+  "description": "HipoCheckinTablet es la app android para cumplir con la normativa cumplimentando los datos de clientes de forma segura y eficiente.",
   "requestFramePermissions": [],
   "prompt": ""
 }
