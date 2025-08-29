@@ -1,6 +1,6 @@
 import React from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-import TabletCheckInPage from './Tablet';
+import TabletCheckInPage from './Tablet/CheckInPage';
 const LazySettingsPage = React.lazy(() => import('./Tablet/SettingsPage'));
 // No auth/provider needed for tablet-only app
 

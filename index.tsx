@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import CheckInPage from './src/Tablet';
+import CheckInPage from './src/Tablet/CheckInPage';
 import './src/index.css';
 
 const rootElement = document.getElementById('root');
