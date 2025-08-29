@@ -10,7 +10,6 @@ interface Labels {
   cp: string;
   localidad: string;
   calleNumero: string;
-  motivo: string;
   enviar: string;
   reset: string;
 }
@@ -22,7 +21,6 @@ interface FormState {
   cp: string;
   localidad: string;
   calleNumero: string;
-  motivo?: string;
 }
 
 const initialState: FormState = {
@@ -41,7 +39,6 @@ const defaultLabels: Labels = {
   cp: 'C.P',
   localidad: 'Localidad',
   calleNumero: 'Calle nº',
-  motivo: 'Motivo',
   enviar: 'Enviar',
   reset: 'Reset'
 };
@@ -114,7 +111,7 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       try { appendAccessLog({ ts: new Date().toISOString(), nombre: rec.nombre, motivo: rec.motivo }); } catch(e){}
           try { alert(navigator.language.startsWith('es') ? 'Guardado en cola local. Se reintentará cuando haya red.' : 'Saved to local queue. Will retry when online.'); } catch(e){}
           // Keep local shadow copy
-          addGuest({ roomNumber: form.calleNumero || 'N/A', guestName: form.nombre || 'N/A', mealPlanRegime: 'BB' as any });
+          addGuest({ roomNumber: form.calleNumero || 'N/A', guestName: form.nombre || 'N/A' });
           setForm(initialState);
           setTimeout(() => firstInputRef.current?.focus(), 50);
         }
@@ -123,7 +120,7 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       }
     }
     else {
-      try { appendAccessLog({ ts: new Date().toISOString(), nombre: payload.nombre, motivo: payload.motivo }); } catch(e){}
+  try { appendAccessLog({ ts: new Date().toISOString(), nombre: payload.nombre }); } catch(e){}
     }
 
     try {
@@ -131,8 +128,7 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
         // keep local shadow copy for UX
         addGuest({
           roomNumber: form.calleNumero || 'N/A',
-          guestName: form.nombre || 'N/A',
-          mealPlanRegime: 'BB' as any
+          guestName: form.nombre || 'N/A'
         });
 
         await new Promise(res => setTimeout(res, 300));
@@ -200,10 +196,7 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
         </div>
       </div>
 
-      <div>
-        <label htmlFor="motivo" className="block text-sm md:text-base font-medium mb-1">{L.motivo}:</label>
-        <input id="motivo" name="motivo" value={form.motivo || ''} onChange={onChange} aria-label={L.motivo} placeholder="Motivo de la visita" className="w-full border rounded px-4 py-3 text-base md:text-lg" />
-      </div>
+  {/* motivo field removed for tablet-only flow */}
 
       <div>
   <label htmlFor="calleNumero" className="block text-sm md:text-base font-medium mb-1">{L.calleNumero}:</label>
