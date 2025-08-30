@@ -1,188 +1,161 @@
-name: Android CI - Build APK
+name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release and attach APK (true/false)'
+        required: false
+        default: 'false'
+      release_name:
+        description: 'Release / tag name to create (used when create_release=true)'
+        required: false
+        default: 'test-build'
 
 jobs:
   build-android:
-    name: Build Android APK (fixed)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-    on:
-      push:
-        branches: [ main, master ]
-      workflow_dispatch:
-        inputs:
-          create_release:
-            description: 'Create GitHub Release and attach APK (true/false)'
-            required: false
-            default: 'false'
-          release_name:
-            description: 'Release / tag name to create (used when create_release=true)'
-            required: false
-            default: 'test-build'
+      - name: CI workspace diagnostics
+        run: |
+          echo '--- PWD ---'
+          pwd
+          echo '--- LS root ---'
+          ls -la
+          echo '--- LS android ---'
+          ls -la android || true
+          echo '--- LS android/capacitor-cordova-android-plugins ---'
+          ls -la android/capacitor-cordova-android-plugins || true
+          echo '--- show android/settings.gradle ---'
+          sed -n '1,200p' android/settings.gradle || true
+          echo '--- show android/app/capacitor.build.gradle (head) ---'
+          sed -n '1,120p' android/app/capacitor.build.gradle || true
 
-    jobs:
-      build-android:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-          - name: CI workspace diagnostics
-            run: |
-              echo '--- PWD ---'
-              pwd
-              echo '--- LS root ---'
-              ls -la
-              echo '--- LS android ---'
-              ls -la android || true
-              echo '--- LS android/capacitor-cordova-android-plugins ---'
-              ls -la android/capacitor-cordova-android-plugins || true
-              echo '--- show android/settings.gradle ---'
-              sed -n '1,200p' android/settings.gradle || true
-              echo '--- show android/app/capacitor.build.gradle (head) ---'
-              sed -n '1,120p' android/app/capacitor.build.gradle || true
+      - name: Install npm dependencies
+        run: npm ci
 
-          - name: Setup Node.js
-            uses: actions/setup-node@v4
-            with:
-              node-version: '20'
+      - name: Build web assets (Vite)
+        run: npm run build
 
-          - name: Install npm dependencies
-            run: npm ci
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
-          - name: Build web assets (Vite)
-            run: npm run build
+      - name: Show Java version (diagnostic)
+        run: |
+          java -version || true
+          javac -version || true
 
-          - name: Setup Java (JDK 17)
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'temurin'
-              java-version: '21'
+      - name: Prepare Android SDK path
+        run: |
+          echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/Android/Sdk" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$RUNNER_TEMP/Android/Sdk" >> $GITHUB_ENV
+          echo "PATH=$RUNNER_TEMP/Android/Sdk/cmdline-tools/latest/bin:$RUNNER_TEMP/Android/Sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
-          - name: Show Java version (diagnostic)
-            run: |
-              java -version || true
-              javac -version || true
+      - name: Install Android SDK command-line tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline.zip
+          unzip -q cmdline.zip
+          rm cmdline.zip
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ || true
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-          - name: Prepare Android SDK path
-            run: |
-              echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/Android/Sdk" >> $GITHUB_ENV
-              echo "ANDROID_HOME=$RUNNER_TEMP/Android/Sdk" >> $GITHUB_ENV
-              echo "PATH=$RUNNER_TEMP/Android/Sdk/cmdline-tools/latest/bin:$RUNNER_TEMP/Android/Sdk/platform-tools:$PATH" >> $GITHUB_ENV
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
+          ls -la $ANDROID_SDK_ROOT || true
 
-          - name: Install Android SDK command-line tools
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y wget unzip
-              mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-              cd $ANDROID_SDK_ROOT/cmdline-tools
-              wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline.zip
-              unzip -q cmdline.zip
-              rm cmdline.zip
-              mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-              mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ || true
-              yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-              $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+      - name: Copy web assets to native project
+        run: npx cap copy
 
-          - name: Verify Android SDK
-            run: |
-              echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
-              ls -la $ANDROID_SDK_ROOT || true
+      - name: Ensure Capacitor Android plugins & sync
+        run: |
+          # Ensure native Android project is synced and plugin files are generated
+          npx cap sync android || true
+          echo '--- LS android/capacitor-cordova-android-plugins after sync ---'
+          ls -la android/capacitor-cordova-android-plugins || true
 
-          - name: Copy web assets to native project
-            run: npx cap copy
-
-          - name: Ensure Capacitor Android plugins & sync
-            run: |
-              # Ensure native Android project is synced and plugin files are generated
-              npx cap sync android || true
-              echo '--- LS android/capacitor-cordova-android-plugins after sync ---'
-              ls -la android/capacitor-cordova-android-plugins || true
-
-          - name: Verify or create capacitor-cordova-android-plugins placeholder
-            run: |
-              # Some CI runs never generate the capacitor-cordova-android-plugins folder.
-              # Create a minimal placeholder structure so Gradle includes and apply-from
-              # calls don't fail when searching for files.
-              PLUGINS_DIR=android/capacitor-cordova-android-plugins
-              if [ -d "$PLUGINS_DIR" ]; then
-                echo "plugins dir exists: $PLUGINS_DIR"
-                ls -la "$PLUGINS_DIR" || true
-              else
-                echo "Creating placeholder for $PLUGINS_DIR"
-                mkdir -p "$PLUGINS_DIR/src/main/libs" || exit 0
-                # create an empty cordova.variables.gradle if missing so apply from won't fail
-                if [ ! -f "$PLUGINS_DIR/cordova.variables.gradle" ]; then
-                  cat > "$PLUGINS_DIR/cordova.variables.gradle" <<'EOF'
-    // placeholder cordova.variables.gradle created by CI to avoid build failures
-    // Populate with plugin variable definitions if your build requires them.
-    // This file intentionally left minimal for CI runs where plugins aren't needed.
-    EOF
-                fi
-                echo "Placeholder created"
-                ls -la "$PLUGINS_DIR" || true
-              fi
-
-          - name: Build APK (Gradle)
-            working-directory: android
-            run: ./gradlew assembleDebug --no-daemon
-
-          - name: Upload APK artifact
-            uses: actions/upload-artifact@v4
-            with:
-              name: app-debug-apk
-              path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      publish-release:
-        needs: build-android
-        runs-on: ubuntu-latest
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true' }}
-        steps:
-          - name: Download APK artifact
-            uses: actions/download-artifact@v4
-            with:
-              name: app-debug-apk
-              path: ./artifacts
-
-          - name: Locate and copy apk
-            run: |
-              set -e
-              echo "Files in artifacts:"
-              find ./artifacts -type f -maxdepth 5 -print
-              APK_PATH=$(find ./artifacts -type f -name '*.apk' | head -n1)
-              if [ -z "$APK_PATH" ]; then echo "APK not found"; exit 1; fi
-              echo "Found apk: $APK_PATH"
-              cp "$APK_PATH" ./app-debug.apk
-
-          - name: Create GitHub Release
-            id: create_release
-            uses: actions/create-release@v1
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            with:
-              tag_name: ${{ github.event.inputs.release_name }}
-              release_name: ${{ github.event.inputs.release_name }}
-              draft: false
-              prerelease: true
-
-          - name: Upload Release Asset
-            uses: actions/upload-release-asset@v1
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            with:
-              upload_url: ${{ steps.create_release.outputs.upload_url }}
-              asset_path: ./app-debug.apk
-              asset_name: app-debug.apk
-              asset_content_type: application/vnd.android.package-archive
+      - name: Verify or create capacitor-cordova-android-plugins placeholder
+        run: |
+          PLUGINS_DIR=android/capacitor-cordova-android-plugins
+          if [ -d "$PLUGINS_DIR" ]; then
+            echo "plugins dir exists: $PLUGINS_DIR"
+            ls -la "$PLUGINS_DIR" || true
+          else
+            echo "Creating placeholder for $PLUGINS_DIR"
+            mkdir -p "$PLUGINS_DIR/src/main/libs" || true
+            if [ ! -f "$PLUGINS_DIR/cordova.variables.gradle" ]; then
+              printf '%s\n' '// placeholder cordova.variables.gradle created by CI to avoid build failures' '// Populate with plugin variable definitions if your build requires them.' '// This file intentionally left minimal for CI runs where plugins aren'\''t needed.' > "$PLUGINS_DIR/cordova.variables.gradle"
+            fi
+            echo "Placeholder created"
+            ls -la "$PLUGINS_DIR" || true
+          fi
 
       - name: Build APK (Gradle)
         working-directory: android
-        run: ./gradlew clean :app:assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+  publish-release:
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true' }}
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+          path: ./artifacts
+
+      - name: Locate and copy apk
+        run: |
+          set -e
+          echo "Files in artifacts:"
+          find ./artifacts -type f -maxdepth 5 -print
+          APK_PATH=$(find ./artifacts -type f -name '*.apk' | head -n1)
+          if [ -z "$APK_PATH" ]; then echo "APK not found"; exit 1; fi
+          echo "Found apk: $APK_PATH"
+          cp "$APK_PATH" ./app-debug.apk
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.release_name }}
+          release_name: ${{ github.event.inputs.release_name }}
+          draft: false
+          prerelease: true
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./app-debug.apk
+          asset_name: app-debug.apk
+          asset_content_type: application/vnd.android.package-archive
