@@ -7,12 +7,25 @@ android {
   }
 }
 
-apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
+// Guard the optional cordova variables include so CI won't fail when the
+// generated `capacitor-cordova-android-plugins` folder is not present.
+def cordovaVarsFile = rootProject.file('capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (cordovaVarsFile.exists()) {
+  apply from: cordovaVarsFile
+} else {
+  println "Note: cordova.variables.gradle not found in capacitor-cordova-android-plugins; skipping apply"
+}
 dependencies {
 
-// Resolve plugin variables file from the root project so Gradle finds it
-// regardless of the current working directory in CI runners.
-apply from: rootProject.file('capacitor-cordova-android-plugins/cordova.variables.gradle')
+  // Resolve plugin variables file from the root project so Gradle finds it
+  // regardless of the current working directory in CI runners. Guard the
+  // include so missing generated files don't break the Gradle configuration.
+  def cordovaVarsRoot = rootProject.file('capacitor-cordova-android-plugins/cordova.variables.gradle')
+  if (cordovaVarsRoot.exists()) {
+    apply from: cordovaVarsRoot
+  } else {
+    println "Note: root capacitor-cordova-android-plugins/cordova.variables.gradle not present; skipping"
+  }
 
 }
 

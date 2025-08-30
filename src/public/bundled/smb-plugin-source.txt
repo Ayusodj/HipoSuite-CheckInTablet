@@ -1,0 +1,7 @@
+// SmbWriter.java source (placeholder). This file can be used as the plugin source on the PC
+// to compile or to inspect. The Android APK contains a native plugin already; this text
+// can be used to deploy a copy on the target machine if desired.
+
+package com.hipo.suite.smb;
+
+// ... (omitted, full source is included in the APK native code)

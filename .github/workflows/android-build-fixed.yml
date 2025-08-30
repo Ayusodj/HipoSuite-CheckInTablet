@@ -92,6 +92,30 @@ jobs:
           echo '--- LS android/capacitor-cordova-android-plugins after sync ---'
           ls -la android/capacitor-cordova-android-plugins || true
 
+      - name: Verify or create capacitor-cordova-android-plugins placeholder
+        run: |
+          # Some CI runs never generate the capacitor-cordova-android-plugins folder.
+          # Create a minimal placeholder structure so Gradle includes and apply-from
+          # calls don't fail when searching for files.
+          PLUGINS_DIR=android/capacitor-cordova-android-plugins
+          if [ -d "$PLUGINS_DIR" ]; then
+            echo "plugins dir exists: $PLUGINS_DIR"
+            ls -la "$PLUGINS_DIR" || true
+          else
+            echo "Creating placeholder for $PLUGINS_DIR"
+            mkdir -p "$PLUGINS_DIR/src/main/libs" || exit 0
+            # create an empty cordova.variables.gradle if missing so apply from won't fail
+            if [ ! -f "$PLUGINS_DIR/cordova.variables.gradle" ]; then
+              cat > "$PLUGINS_DIR/cordova.variables.gradle" <<'EOF'
+// placeholder cordova.variables.gradle created by CI to avoid build failures
+// Populate with plugin variable definitions if your build requires them.
+// This file intentionally left minimal for CI runs where plugins aren't needed.
+EOF
+            fi
+            echo "Placeholder created"
+            ls -la "$PLUGINS_DIR" || true
+          fi
+
       - name: Build APK (Gradle)
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
