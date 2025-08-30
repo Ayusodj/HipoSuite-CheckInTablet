@@ -101,6 +101,27 @@ const CheckInPage: React.FC = () => {
   const [modalPos, setModalPos] = React.useState<{top: number; left: number} | null>(null);
   const [lang, setLang] = useState<Lang>(() => { try { const saved = localStorage.getItem('checkin_lang'); return (saved as Lang) || 'es'; } catch { return 'es'; } });
   const [showSettings, setShowSettings] = useState(false);
+  // tap-to-open-settings: keep the settings button hidden by default, open after multiple taps on the logo
+  const tapCountRef = React.useRef(0);
+  const tapTimerRef = React.useRef<number | null>(null);
+  const TAP_THRESHOLD = 7; // number of taps required
+  const TAP_RESET_MS = 3000; // ms to reset tap count
+  const handleLogoTap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) {
+      window.clearTimeout(tapTimerRef.current);
+    }
+    tapTimerRef.current = window.setTimeout(() => {
+      tapCountRef.current = 0;
+      tapTimerRef.current = null;
+    }, TAP_RESET_MS);
+    if (tapCountRef.current >= TAP_THRESHOLD) {
+      // trigger settings and reset
+      tapCountRef.current = 0;
+      if (tapTimerRef.current) { window.clearTimeout(tapTimerRef.current); tapTimerRef.current = null; }
+      setShowSettings(true);
+    }
+  };
   const hiddenLangs: string[] = (() => { try { return JSON.parse(localStorage.getItem('checkin_hidden_langs') || '[]'); } catch { return []; } })();
   const bgImage = (() => { try { return localStorage.getItem('checkin_bg') || '/assets/checkin-top-new.jpg'; } catch { return '/assets/checkin-top-new.jpg'; } })();
   const [showPolicy, setShowPolicy] = useState(false);
@@ -295,12 +316,13 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
   <div aria-hidden style={{ height: '12vh', width: '100%' }} />
 
       {/* Logo centrado en la parte superior */}
-      <div className="w-full flex justify-center items-start pointer-events-none" style={{ marginTop: 'calc(-14vh - 3vh)' }}>
+      <div className="w-full flex justify-center items-start" style={{ marginTop: 'calc(-14vh - 3vh)' }}>
         <img
           src="/assets/logo checkin.png"
           alt="Hipotels"
           className="h-24 md:h-32 lg:h-40 object-contain"
-          style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.28))' }}
+          onClick={handleLogoTap}
+          style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.28))', cursor: 'pointer', touchAction: 'manipulation' }}
         />
       </div>
 
@@ -323,10 +345,7 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
             </div>
           </div>
 
-        {/* settings button top-right */}
-        <div className="fixed top-4 right-4 z-50">
-          <button onClick={() => setShowSettings(true)} className="p-2 bg-white rounded shadow">⚙️</button>
-        </div>
+  {/* settings button hidden by default; open settings by tapping the logo repeatedly */}
 
         {/* Form area */}
         <main className="w-full panel-opaque rounded-lg shadow p-4 md:p-6">

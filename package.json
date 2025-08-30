@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "backend": "cd ../backend_HipoSuite && if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi; python manage.py runserver 127.0.0.1:8000"
+  "backend": "cd ../backend_HipoSuite && if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi; python manage.py runserver 127.0.0.1:8000",
+  "emulator:list-avds": "bash -lc '\"$ANDROID_SDK_ROOT\"/emulator/emulator -list-avds || true'",
+  "emulator:install": "bash ./scripts/install-on-emulator.sh",
+  "emulator:print-source": "bash -lc 'echo \"source scripts/set-java-for-emulator.sh /path/to/jdk17\"'"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",

@@ -64,7 +64,7 @@ const SettingsPage: React.FC<{ onClose: ()=>void }> = ({ onClose }) => {
           </div>
           <div className="flex gap-2 items-center">
             <button onClick={onDeploySmbPlugin} className="px-3 py-2 border rounded">Desplegar Plugin SMB</button>
-            <div className="text-sm text-gray-600">El archivo resultante debe copiarse al proyecto Android; el acceso al fichero SMB se hace desde un PC (al abrir pedirá usuario/contraseña — en pruebas: <strong>admin:admin</strong>).</div>
+            <div className="text-sm text-gray-600">Introduce la ruta o URL donde quieres que se guarde el fichero resultante en 'ruta/archivo en el servidor'. Atención: si indicas una ruta SMB, el acceso al fichero se realiza desde un PC que monte esa carpeta (al abrir pedirá usuario/contraseña). Para guardar automáticamente desde la app se recomienda usar un servicio HTTP (endpoint) en servidor que reciba los datos y escriba el Excel en la ruta indicada.</div>
           </div>
           <div>
             <label className="block text-sm font-medium">Clave API (opcional)</label>
