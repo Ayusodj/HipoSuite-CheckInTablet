@@ -46,6 +46,14 @@ jobs:
       - name: Build web assets (Vite)
         run: npm run build
 
+      - name: Sync Capacitor Plugins (pre-build)
+        run: |
+          # Ensure native plugins are generated before preparing Java/Android SDK
+          echo 'Running npx cap sync android (pre-build)'
+          npx cap sync android
+          echo '--- LS android/capacitor-cordova-android-plugins after pre-sync ---'
+          ls -la android/capacitor-cordova-android-plugins || true
+
       - name: Setup Java (JDK 17)
         uses: actions/setup-java@v4
         with:
