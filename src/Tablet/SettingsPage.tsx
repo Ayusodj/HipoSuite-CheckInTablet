@@ -65,7 +65,10 @@ const SettingsPage: React.FC<{ onClose: ()=>void }> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-60 p-6 flex items-center justify-center bg-black/70">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+      <div
+        className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <h2 className="text-lg font-semibold mb-4">Ajustes tablet</h2>
           <div className="space-y-3">
           <div>
