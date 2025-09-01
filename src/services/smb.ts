@@ -9,6 +9,12 @@ export async function sendToSmb(rec: CheckInRecord): Promise<boolean> {
   const excelServerUrl = (() => { try { return localStorage.getItem('excel_server_url'); } catch { return null; } })();
   const excelServerPath = (() => { try { return localStorage.getItem('excel_server_path'); } catch { return null; } })();
   const excelServerKey = (() => { try { return localStorage.getItem('excel_server_key'); } catch { return null; } })();
+  // If the configured path looks like an SMB/UNC path, prefer the native SMB writer.
+  const looksLikeSmb = (p?: string | null) => !!p && (/^\\\\|^\\\/?|^smb:\/\//i.test(p) || p.includes('\\'));
+  if (looksLikeSmb(excelServerPath)) {
+    // attempt native write
+    return await sendToSmbNative(rec);
+  }
   if (!excelServerUrl) return false;
   try {
     const url = excelServerUrl.replace(/\/$/, '') + '/append';
@@ -31,7 +37,7 @@ export async function sendToSmbNative(rec: CheckInRecord): Promise<boolean> {
     if (!cap) return false;
     const Plugins = (window as any).Plugins || (cap.Plugins || {});
     if (Plugins && Plugins.SmbWriter && typeof Plugins.SmbWriter.writeLine === 'function') {
-  const smbUrl = localStorage.getItem('excel_server_url') || '';
+      const smbUrl = localStorage.getItem('excel_server_path') || '';
       const user = localStorage.getItem('excel_smb_user') || '';
       const pass = localStorage.getItem('excel_smb_pass') || '';
       const line = [rec.created_at, rec.nombre, rec.telefono, rec.email, rec.cp, rec.localidad, rec.calleNumero, rec.motivo || ''].join(',');

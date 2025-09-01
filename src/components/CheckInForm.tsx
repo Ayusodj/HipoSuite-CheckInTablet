@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // GuestDataContext and AuthContext removed — use local no-op handlers instead
 import { enqueueCheckin, processQueue, appendAccessLog } from '../utils/offlineQueue';
-import { sendToSmb } from '../services/smb';
+import { sendToSmb, sendToSmbNative } from '../services/smb';
 
 interface Labels {
   nombre: string;
@@ -71,12 +71,13 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       motivo: form.motivo || '',
       created_at: new Date().toISOString()
     };
-    // If an excel server is configured (on the network), send there only.
-    const excelServerUrl = (() => { try { return localStorage.getItem('excel_server_url'); } catch { return null; } })();
-    const excelServerPath = (() => { try { return localStorage.getItem('excel_server_path'); } catch { return null; } })();
-    const excelServerKey = (() => { try { return localStorage.getItem('excel_server_key'); } catch { return null; } })();
+  // Determine configuration
+  const excelServerUrl = (() => { try { return localStorage.getItem('excel_server_url'); } catch { return null; } })();
+  const excelServerPath = (() => { try { return localStorage.getItem('excel_server_path'); } catch { return null; } })();
+  const excelServerKey = (() => { try { return localStorage.getItem('excel_server_key'); } catch { return null; } })();
   let saved = false;
-    if (excelServerUrl) {
+  // If an excel_server_url is configured, try HTTP endpoint first
+  if (excelServerUrl) {
       try {
         const url = excelServerUrl.replace(/\/$/, '') + '/append';
         const body = { filePath: excelServerPath || '', row: payload };
@@ -97,8 +98,16 @@ const CheckInForm: React.FC<{ labels?: Partial<Labels> }> = ({ labels }) => {
       } catch (err) {
         console.error('Failed to send to excel server', err);
       }
+    } else if (excelServerPath && (/^\\\\|^\\|^smb:\/\//i.test(excelServerPath) || excelServerPath.includes('\\'))) {
+      // No HTTP server configured, but path looks like SMB/UNC -> attempt native SMB write
+      try {
+        const nativeOk = await sendToSmbNative(payload as any);
+        if (nativeOk) saved = true;
+      } catch (e) {
+        console.debug('native smb write failed', e);
+      }
     } else {
-      const msg = navigator.language.startsWith('es') ? 'No hay servidor Excel configurado. Configura la URL en la pantalla de tablet.' : 'No excel server configured. Set the URL in tablet settings.';
+      const msg = navigator.language.startsWith('es') ? 'No hay servidor Excel configurado ni una ruta SMB válida. Configura la URL o la ruta en la pantalla de tablet.' : 'No excel server configured or valid SMB path. Set the URL or path in tablet settings.';
       try { alert(msg); } catch (e) { console.warn('notify failed', e); }
     }
 
