@@ -116,6 +116,24 @@ jobs:
             ls -la "$PLUGINS_DIR" || true
           fi
 
+      - name: Fail if real Capacitor/Cordova plugins are missing
+        run: |
+          PLUGINS_DIR=android/capacitor-cordova-android-plugins
+          echo "Checking for real plugin files in: $PLUGINS_DIR"
+          if [ ! -d "$PLUGINS_DIR" ]; then
+            echo "ERROR: $PLUGINS_DIR does not exist. Ensure plugins are generated or restored before build."
+            exit 1
+          fi
+          # Count files excluding the minimal placeholder we create in CI
+          nonplaceholder_count=$(find "$PLUGINS_DIR" -type f ! -name 'cordova.variables.gradle' ! -name 'README*' | wc -l | tr -d ' ')
+          echo "Non-placeholder file count: $nonplaceholder_count"
+          if [ "$nonplaceholder_count" -eq 0 ]; then
+            echo "ERROR: No plugin files found in $PLUGINS_DIR (only placeholder)."
+            echo "If your build requires Cordova/Capacitor plugins, run 'npx cap sync android' locally and commit the generated files or restore them in CI."
+            ls -la "$PLUGINS_DIR" || true
+            exit 1
+          fi
+
       - name: Build APK (Gradle)
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
