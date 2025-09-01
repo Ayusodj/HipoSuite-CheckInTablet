@@ -31,11 +31,19 @@ export async function sendToSmbNative(rec: CheckInRecord): Promise<boolean> {
     if (!cap) return false;
     const Plugins = (window as any).Plugins || (cap.Plugins || {});
     if (Plugins && Plugins.SmbWriter && typeof Plugins.SmbWriter.writeLine === 'function') {
-      const smbUrl = localStorage.getItem('excel_server_url') || '';
+  const smbUrl = localStorage.getItem('excel_server_url') || '';
       const user = localStorage.getItem('excel_smb_user') || '';
       const pass = localStorage.getItem('excel_smb_pass') || '';
       const line = [rec.created_at, rec.nombre, rec.telefono, rec.email, rec.cp, rec.localidad, rec.calleNumero, rec.motivo || ''].join(',');
-      await Plugins.SmbWriter.writeLine({ url: smbUrl, user, pass, line });
+  const retries = parseInt(localStorage.getItem('excel_smb_retries') || '3', 10) || 3;
+  const retryDelayMs = parseInt(localStorage.getItem('excel_smb_retry_delay_ms') || '1000', 10) || 1000;
+  const atomic = (localStorage.getItem('excel_smb_atomic') || 'true') === 'true';
+  const encrypt = (localStorage.getItem('excel_smb_encrypt') || 'false') === 'true';
+  const keyAlias = localStorage.getItem('excel_smb_key_alias') || 'hipo_smb_key';
+  const passphrase = localStorage.getItem('excel_smb_passphrase') || '';
+    const protectExcel = (localStorage.getItem('excel_protect_xlsx') || 'false') === 'true';
+    const excelPassword = localStorage.getItem('excel_password') || '';
+    await Plugins.SmbWriter.writeLine({ url: smbUrl, user, pass, line, retries, retryDelayMs, atomic, encrypt, keyAlias, passphrase, protectExcel, excelPassword });
       return true;
     }
     return false;

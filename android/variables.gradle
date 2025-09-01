@@ -1,5 +1,7 @@
 ext {
-    minSdkVersion = 23
+    // Incrementado a 26 para soportar APIs usadas por dependencias como Apache POI
+    // (MethodHandle.invoke/ invokeExact requieren minSdk >= 26 durante dexing)
+    minSdkVersion = 26
     compileSdkVersion = 35
     targetSdkVersion = 35
     androidxActivityVersion = '1.9.2'

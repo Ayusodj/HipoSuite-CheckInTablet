@@ -125,6 +125,13 @@ const CheckInPage: React.FC = () => {
   const hiddenLangs: string[] = (() => { try { return JSON.parse(localStorage.getItem('checkin_hidden_langs') || '[]'); } catch { return []; } })();
   const bgImage = (() => { try { return localStorage.getItem('checkin_bg') || '/assets/checkin-top-new.jpg'; } catch { return '/assets/checkin-top-new.jpg'; } })();
   const [showPolicy, setShowPolicy] = useState(false);
+  // Detect orientation and approximate "tablet" by smallest viewport dimension
+  const [isPortrait, setIsPortrait] = React.useState<boolean>(() => {
+    try { return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(orientation: portrait)').matches; } catch { return false; }
+  });
+  const [isTablet, setIsTablet] = React.useState<boolean>(() => {
+    try { if (typeof window === 'undefined') return false; const minDim = Math.min(window.innerWidth, window.innerHeight); return minDim >= 600; } catch { return false; }
+  });
 
   const t = TRANSLATIONS[lang];
 
@@ -161,6 +168,27 @@ const CheckInPage: React.FC = () => {
       window.removeEventListener('scroll', onResize, true);
     };
   }, [showPolicy, computeModalPos]);
+
+  // keep orientation/tablet state updated
+  React.useEffect(() => {
+    const check = () => {
+      try {
+        const portrait = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(orientation: portrait)').matches;
+        const minDim = typeof window !== 'undefined' ? Math.min(window.innerWidth, window.innerHeight) : 0;
+        setIsPortrait(!!portrait);
+        setIsTablet(minDim >= 600);
+      } catch (e) {
+        /* ignore */
+      }
+    };
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+  }, []);
 
   React.useEffect(() => {
     try { localStorage.setItem('checkin_lang', lang); } catch { /* ignore */ }
@@ -361,7 +389,13 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
 
         {/* Privacy policy at bottom - placed with same gap as above */}
         <footer className="w-full flex justify-center" style={{ marginBottom: '3vh' }}>
-          <div className="w-full panel-opaque rounded-lg shadow p-3 md:p-4 text-sm text-center">
+          <div className="w-full panel-opaque rounded-lg shadow p-3 md:p-4 text-sm text-center" style={{ maxWidth: (() => {
+              try {
+                const base = 768; // matches tailwind max-w-3xl
+                if (isTablet && isPortrait) return Math.min(base * 2, Math.floor(window.innerWidth * 0.95));
+                return Math.min(base, Math.floor(window.innerWidth * 0.95));
+              } catch { return undefined; }
+            })(), margin: '0 auto' }}>
             <h3 className="font-semibold mb-1">{t.privacyTitle}</h3>
             <p className="mb-2 text-gray-700 dark:text-gray-200">{t.policyHtml}</p>
             <div className="flex justify-center">
@@ -377,7 +411,13 @@ V každém případě nás můžete kontaktovat a uplatnit svá práva na námit
           <div className="fixed inset-0 z-40" onClick={() => setShowPolicy(false)} style={{ backgroundColor: 'rgba(0,0,0,0.8)' }} />
           {/* modal centered relative to main content area */}
           <div className="fixed z-50 p-4" style={modalPos ? { top: modalPos.top + 'px', left: modalPos.left + 'px', transform: 'translate(-50%,-50%)' } : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}>
-            <div role="dialog" aria-modal="true" className="panel-solid w-full max-w-3xl rounded shadow-lg">
+            <div role="dialog" aria-modal="true" className="panel-solid w-full rounded shadow-lg" style={{ maxWidth: (() => {
+                  try {
+                    const base = 768;
+                    if (isTablet && isPortrait) return Math.min(base * 2, Math.floor(window.innerWidth * 0.95));
+                    return Math.min(base, Math.floor(window.innerWidth * 0.95));
+                  } catch { return undefined; }
+                })(), width: '95vw' }}>
                 <div className="p-6 max-h-[80vh] overflow-y-auto text-gray-800 dark:text-gray-100">
                   <h2 className="text-lg font-semibold mb-4">{t.privacyTitle}</h2>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed" style={{ lineHeight: 1.6 }}>{POLICY_TEXTS[lang]}</div>

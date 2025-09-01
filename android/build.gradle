@@ -31,6 +31,39 @@ subprojects {
                     it.options.release = 17
                 }
             }
+            // If this is the Capacitor module included from node_modules, ensure it targets Java 17
+            try {
+                def pd = project.projectDir?.toString() ?: ''
+                // Only force --release for capacitor subprojects when they are pure Java modules
+                if ((project.path == ':capacitor-android' || pd.contains('@capacitor') || project.name?.toLowerCase()?.contains('capacitor'))
+                    && project.plugins.hasPlugin('java')
+                    && !project.plugins.hasPlugin('com.android.application')
+                    && !project.plugins.hasPlugin('com.android.library')) {
+                    project.logger.lifecycle("Forcing Java release=17 for project: ${project.path} (dir=${pd})")
+                    project.tasks.withType(JavaCompile).configureEach {
+                        it.options.release = 17
+                    }
+                }
+            } catch (ignoredInner) {}
+        } catch (ignored) {}
+    }
+}
+
+// Ensure Android library/application subprojects that request Java 21 are
+// compiled with Java 17 compatibility when only JDK 17 is available locally.
+subprojects {
+    afterEvaluate { project ->
+        try {
+            if (project.plugins.hasPlugin('com.android.application') || project.plugins.hasPlugin('com.android.library')) {
+                try {
+                    def pd = project.projectDir?.toString() ?: ''
+                    project.logger.lifecycle("Forcing Android compileOptions to Java 17 for project: ${project.path} (dir=${pd})")
+                    project.android.compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+                    project.android.compileOptions.targetCompatibility = JavaVersion.VERSION_17
+                } catch (inner) {
+                    // ignore projects where android extension isn't ready
+                }
+            }
         } catch (ignored) {}
     }
 }

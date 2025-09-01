@@ -69,6 +69,10 @@ dependencies {
         // Remote fallback (Maven Central)
         implementation 'com.hierynomus:smbj:0.14.0'
     }
+    // Apache POI for XLSX generation and Office encryption
+    implementation 'org.apache.poi:poi:5.2.3'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.xmlbeans:xmlbeans:5.1.1'
 }
 
 apply from: 'capacitor.build.gradle'
