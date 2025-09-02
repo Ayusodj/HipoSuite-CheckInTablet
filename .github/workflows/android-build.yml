@@ -100,6 +100,23 @@ jobs:
           echo '--- LS android/capacitor-cordova-android-plugins after sync ---'
           ls -la android/capacitor-cordova-android-plugins || true
 
+      - name: Apply AndroidProtocolHandler patch (CI)
+        run: |
+          echo "Checking for patches/AndroidProtocolHandler.java"
+          if [ -f patches/AndroidProtocolHandler.java ]; then
+            TARGET=node_modules/@capacitor/android/capacitor/src/main/java/com/getcapacitor/AndroidProtocolHandler.java
+            echo "Patching $TARGET from patches/AndroidProtocolHandler.java"
+            if [ -f "$TARGET" ]; then
+              cp "$TARGET" "$TARGET.bak" || true
+            else
+              mkdir -p $(dirname "$TARGET") || true
+            fi
+            cp patches/AndroidProtocolHandler.java "$TARGET"
+            echo "Patched file head:"; sed -n '1,80p' "$TARGET" || true
+          else
+            echo "No patch file at patches/AndroidProtocolHandler.java - skipping"
+          fi
+
       - name: Verify or create capacitor-cordova-android-plugins placeholder
         run: |
           PLUGINS_DIR=android/capacitor-cordova-android-plugins
